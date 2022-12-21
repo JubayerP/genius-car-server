@@ -16,7 +16,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    if (!authHeader) { 
         return res.status(401).send({message: 'unAuthorized access'})
     }
     const token = authHeader.split(' ')[1]
@@ -43,8 +43,16 @@ async function run() {
         })
 
         app.get('/services', async(req, res) => {
-            const query = {};
-            const cursor = serviceCollection.find(query);
+            let query = {};
+            const search = req.query.search;
+            if(search.length){
+                query = {
+                    $text:{$search: search}
+                }
+            }
+            const filter = req.query.order;
+            const order = filter === 'asc' ? 1 : -1;
+            const cursor = serviceCollection.find(query).sort({price: order});
             const services = await cursor.toArray();
             res.send(services);
         })
